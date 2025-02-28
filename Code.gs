@@ -13,6 +13,12 @@ function getCalendarNames() {
   return allCalendarsNames;
 }
 
+// Used to alert users if they select internal calendar
+function getInternalCalendarNameById(calendarId) {
+  var calendar = CalendarApp.getCalendarById(calendarId);
+    return calendar.getName();
+}
+
 function doGet() {
   return HtmlService.createHtmlOutputFromFile("Index");
 }
@@ -20,6 +26,7 @@ function doGet() {
 function addEvents(
   calendarName,
   query,
+  frequency,
   title,
   guests,
   location,
@@ -124,36 +131,62 @@ function addEvents(
   if (startTime === "" && endTime === "") {
     // make all-day event, later
   } else if (startTime !== "" && endTime === "") {
+    // Handle 12-hour time, if utilized
+    var [timePart, modifier] = startTime.split(" "); // modifier undefined if missing
     // Split strings into lists of hours and minutes
-    startTime = startTime.split(":");
+    startTime = timePart.split(":");
     startTime[0] = parseInt(startTime[0]);
     startTime[1] = parseInt(startTime[1]);
+    if (modifier === "AM" && startTime[0] === 12)
+      startTime[0] = startTime[0] - 12;
+    else if (modifier === "PM" && startTime[0] !== 12)
+      startTime[0] = startTime[0] + 12;
 
     endTime = [];
     endTime[0] = startTime[0] + 1; // simply add 1 hour
     endTime[1] = startTime[1];
   } else if (startTime === "" && endTime !== "") {
+    // Handle 12-hour time, if utilized
+    var [timePart, modifier] = endTime.split(" "); // modifier undefined if missing
     // Split strings into lists of hours and minutes
-    endTime = endTime.split(":");
+    endTime = timePart.split(":");
     endTime[0] = parseInt(endTime[0]);
     endTime[1] = parseInt(endTime[1]);
+    if (modifier === "AM" && endTime[0] === 12)
+      endTime[0] = endTime[0] - 12;
+    else if (modifier === "PM" && endTime[0] !== 12)
+      endTime[0] = endTime[0] + 12;
 
     startTime = [];
     startTime[0] = endTime[0] - 1; // simply subtract 1 hour
     startTime[1] = endTime[1];
   } else {
+    // Handle 12-hour time, if utilized
+    var [timePart, modifier] = startTime.split(" "); // modifier undefined if missing
     // Split strings into lists of hours and minutes
-    startTime = startTime.split(":");
+    startTime = timePart.split(":");
     startTime[0] = parseInt(startTime[0]);
     startTime[1] = parseInt(startTime[1]);
+    if (modifier === "AM" && startTime[0] === 12)
+      startTime[0] = startTime[0] - 12;
+    else if (modifier === "PM" && startTime[0] !== 12)
+      startTime[0] = startTime[0] + 12;
 
-    endTime = endTime.split(":");
+    var [timePart, modifier] = endTime.split(" "); // modifier undefined if missing
+    endTime = timePart.split(":");
     endTime[0] = parseInt(endTime[0]);
     endTime[1] = parseInt(endTime[1]);
+    if (modifier === "AM" && endTime[0] === 12)
+      endTime[0] = endTime[0] - 12;
+    else if (modifier === "PM" && endTime[0] !== 12)
+      endTime[0] = endTime[0] + 12;
   }
 
   // Track dates when events with title occur
   var date = {};
+
+  // Event counter
+  var eventIndex = 0;
 
   // Loop through each event found
   events.forEach(function (event) {
@@ -168,12 +201,15 @@ function addEvents(
 
   var firstEvent = true; // for first event, to which subsequent events will be chained
   var eventSeries = ""; // for chaining events
+  var indexKeep = query.length*(frequency-1); // start first date at this index
 
+  // every event will have the same first date
   var firstDate;
-  for (var k in date) {
-    firstDate = new Date(k);
-    break;
-  }
+  // for (var k in date) {
+    // firstDate = new Date(k);
+    // break;
+  // }
+  firstDate = new Date(Object.keys(date)[indexKeep]); // sort dictionary keys into an array, and select one at index
 
   var dateStartTime = new Date(
     firstDate.getFullYear(),
@@ -201,85 +237,94 @@ function addEvents(
     if (!dryRun) {
       // Check if description is a link
       var includesHttp = description.includes("http"); // "let" is fine, using "var" for flexibility
+      // Check if description includes a space
+      let includesSpace = description.includes(" "); // otherwise, links will break
       // Create the new event
-      createEvent(calendar, includesHttp);
+      createEvent(calendar, includesHttp, includesSpace);
     }
 
     // function nested because it relies on many parameters
-    function createEvent(calendar, includesHttp) {
-      if (firstEvent) {
-        if (includesHttp) {
-          if (startTime === "" && endTime === "") {
-            // make all-day event
-            eventSeries = calendar.createAllDayEventSeries(
-              title,
-              eventDate,
-              CalendarApp.newRecurrence().addDate(eventDate),
-              {
-                location: location,
-                description:
-                  '<a href="' + description + '" target="_blank" >Agenda</a>',
-                guests: guests,
-              }
-            );
+    function createEvent(calendar, includesHttp, includesSpace) {
+      if (eventIndex === indexKeep) {
+        indexKeep++;
+        if (indexKeep % query.length === 0) // jump every query.length
+          indexKeep = indexKeep + query.length*(frequency-1);
+        if (firstEvent) {
+          if (includesHttp) {
+            if (startTime === "" && endTime === "") {
+              // make all-day event
+              eventSeries = calendar.createAllDayEventSeries(
+                title,
+                eventDate,
+                CalendarApp.newRecurrence().addDate(eventDate),
+                {
+                  location: location,
+                  description:
+                    includesSpace ? description :
+                    '<a href="' + description + '" target="_blank" >Agenda</a>',
+                  guests: guests,
+                }
+              );
+            } else {
+              // make regular event
+              eventSeries = calendar.createEventSeries(
+                title,
+                dateStartTime,
+                dateEndTime,
+                CalendarApp.newRecurrence().addDate(eventDate),
+                {
+                  location: location,
+                  description:
+                    includesSpace ? description :
+                    '<a href="' + description + '" target="_blank" >Agenda</a>',
+                  guests: guests,
+                }
+              );
+            }
           } else {
-            // make regular event
-            eventSeries = calendar.createEventSeries(
-              title,
-              dateStartTime,
-              dateEndTime,
-              CalendarApp.newRecurrence().addDate(eventDate),
-              {
-                location: location,
-                description:
-                  '<a href="' + description + '" target="_blank" >Agenda</a>',
-                guests: guests,
-              }
-            );
+            if (startTime === "" && endTime === "") {
+              // make all-day event
+              eventSeries = calendar.createAllDayEventSeries(
+                title,
+                eventDate,
+                CalendarApp.newRecurrence().addDate(eventDate),
+                {
+                  location: location,
+                  description: description,
+                  guests: guests,
+                }
+              );
+            } else {
+              // make regular event
+              eventSeries = calendar.createEventSeries(
+                title,
+                dateStartTime,
+                dateEndTime,
+                CalendarApp.newRecurrence().addDate(eventDate),
+                {
+                  location: location,
+                  description: description,
+                  guests: guests,
+                }
+              );
+            }
           }
-        } else {
-          if (startTime === "" && endTime === "") {
-            // make all-day event
-            eventSeries = calendar.createAllDayEventSeries(
-              title,
-              eventDate,
-              CalendarApp.newRecurrence().addDate(eventDate),
-              {
-                location: location,
-                description: description,
-                guests: guests,
-              }
-            );
-          } else {
-            // make regular event
-            eventSeries = calendar.createEventSeries(
-              title,
-              dateStartTime,
-              dateEndTime,
-              CalendarApp.newRecurrence().addDate(eventDate),
-              {
-                location: location,
-                description: description,
-                guests: guests,
-              }
-            );
-          }
-        }
-        firstEvent = false;
-      } // chain subsequent event to first event
-      else {
-        if (startTime === "" && endTime === "") {
-          eventSeries.setRecurrence(
-            CalendarApp.newRecurrence().addDate(eventDate),
-            firstDate
-          );
-        }
+          firstEvent = false;
+        } // chain subsequent event to first event
         else {
-          eventSeries.setRecurrence(
-            CalendarApp.newRecurrence().addDate(eventDate),
-            dateStartTime,
-            dateEndTime
-          );
+          if (startTime === "" && endTime === "") {
+            eventSeries.setRecurrence(
+              CalendarApp.newRecurrence().addDate(eventDate),
+              firstDate
+            );
+          }
+          else {
+            eventSeries.setRecurrence(
+              CalendarApp.newRecurrence().addDate(eventDate),
+              dateStartTime,
+              dateEndTime
+            );
+          }
         }
       }
       return null;
@@ -287,6 +332,7 @@ function addEvents(
 
     // Log which events were added
     Logger.log("Created a new event on " + eventDate);
+    eventIndex++;
   }
   return "Events created! Go to your Google Calendar...";
 }

@@ -31,6 +31,9 @@
         -webkit-box-sizing: border-box;
         box-sizing: border-box; /* compatibility */
       }
+      input[type="number"] {
+        width: 2em;
+      }
       select,
       input,
       textarea,
@@ -43,6 +46,7 @@
       input[type="submit"],
       text,
       div[id="section"],
+      div[id="inline"],
       div[id="issues"] {
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
           Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
@@ -129,6 +133,20 @@
         <text>Letter day on which you want to create an event</text>
         <!-- prefilled for clarity -->
         <br /><br />
+
+        <!-- <label for="frequency">Frequency:</label><br> -->
+        <div id="inline">
+          Every&nbsp; <input
+            type="number"
+            id="frequency"
+            name="frequency"
+            value="1"
+            min="1"
+            max="3"
+          /> &nbsp;letter day(s)
+        </div>
+        <text>Skip one or two letter days</text>
+        <br /><br />
       </div>
 
       <br />
@@ -170,12 +188,12 @@
         <br />
 
         <label for="description">Description:</label>
-        <input
+        <textarea
           type="text"
           id="description"
           name="description"
           placeholder="Optional"
-        />
+        /></textarea>
         <text>Accepted formats: string or full URL</text>
         <!-- If full URL, then text to display will be "Agenda" -->
         <br /><br />
@@ -202,7 +220,7 @@
               <!-- empty -->
             </div>
             <div id="cell">
-              <input type="text" id="end" name="end" placeholder="6/12/2025" />
+              <input type="text" id="end" name="end" value="6/12/2025" />
             </div>
           </div>
         </div>
@@ -246,7 +264,7 @@
           </div>
         </div>
         <!-- prefilled for clarity -->
-        <text>Accepted format: 24-hour</text>
+        <text>Accepted format: HH:MM AM/PM, HH:MM (24-hour)</text>
         <br /><br />
       </div>
 
@@ -281,7 +299,7 @@
       // JavaScript handles form submission and sends data to the Google Apps Script
       function load() {
         let d = new Date();
-        document.getElementById("start").placeholder = d.getMonth() + "/" + d.getDay() + "/" + d.getFullYear();
+        document.getElementById("start").value = d.getMonth()+1 + "/" + d.getDay() + "/" + d.getFullYear();
         google.script.run
           .withSuccessHandler(function (x) {
             for (const c of x) {
@@ -292,12 +310,25 @@
       }
 
       document
+        .getElementById("calendarName")
+        .addEventListener("change", function () { 
+          var selectedValue = this.value;
+          google.script.run
+            .withSuccessHandler(function (response) {
+              if (selectedValue === response)
+                alert("\"" + selectedValue + "\" is an internal calendar!\n\nPlease kindly choose a different calendar to add events.");
+            })
+            .getInternalCalendarNameById("cais.org_ameqcd19592e51dtlrqp67jtnc@group.calendar.google.com");
+      });
+
+      document
         .getElementById("calendarForm")
         .addEventListener("submit", function (event) {
           event.preventDefault(); // Prevents the form from submitting the traditional way
 
           var calendarName = document.getElementById("calendarName").value;
           var query = [...document.querySelectorAll('input[name=query]:checked')].map(({value}) => value);
+          var frequency = document.getElementById("frequency").value;
           var title = document.getElementById("title").value;
           var guests = document.getElementById("guests").value;
           var location = document.getElementById("location").value;
@@ -317,6 +348,7 @@
             .addEvents(
               calendarName,
               query,
+              frequency,
               title,
               guests,
               location,
