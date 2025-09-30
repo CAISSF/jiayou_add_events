@@ -1,4 +1,4 @@
-<!-- hide dryRun and update reference ID, before deployment -->
+<!-- hide dryRun and update version number, before deployment -->
 
 <!DOCTYPE html>
 <html>
@@ -7,21 +7,43 @@
     <!-- <title>Add 加油 ("jiā yóu") Events</title> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Compiled and minified CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@materializecss/materialize@2.1.1/dist/css/materialize.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@materializecss/materialize@2.2.2/dist/css/materialize.min.css">
     <!-- Compiled and minified JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/@materializecss/materialize@2.1.1/dist/js/materialize.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@materializecss/materialize@2.2.2/dist/js/materialize.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap" rel="stylesheet">    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols+2&display=swap" rel="stylesheet">
     <style>
       /* Basic styling for the form */
+      /* use few root colors, based on material design */
       :root {
-        /* use few root colors, based on material design */
-        --background: #e0e0e0; /* equal to "grey lighten-2" */
+        /* Light mode colors (default) */
+        --background: #e0e0e0ff; /* equal to "grey lighten-2" */
         --border: black;
-        --container: #fcfcff; /* equal to --md-sys-color-surface */
-        --text: var(--border);
+        --border-textarea: var(--md-sys-color-primary-light);
+        --container: #fcfcffff; /* equal to --md-sys-color-surface */
+        --text: black;
         --reference: grey;
+      }
+
+      /* Dark mode colors */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background: #e0e0e011; /* dark background */
+          --border: white; /* light border for contrast */
+          --border-textarea: var(--md-sys-color-primary-dark);
+          --container: #fcfcff11; /* dark container */
+          --text: white; /* light text */
+          --reference: grey; /* keep */
+        }
       }
       body {
         background-color: var(--background);
+        /* font-family: system-ui, "Noto Serif SC", serif; /* sans-serif for English, serif for Chinese */
+        /* worked in google chrome, but not safari: safari can't access either Kai font, and it only displays one font at a time */
+        font-optical-sizing: auto; /* suggested by google font */
       }
       header,
       div[id="section"],
@@ -32,18 +54,21 @@
       footer {
         text-align: center;
       }
-      div[id="user"] {
-        font-weight: bold;
-      }
+      /* div[id="user"] { */
+        /* font-weight: bold; */
+      /* } */
       form {
-        max-width: 1000px;
+        max-width: 95%;
         margin: 0 auto;
         padding-left: 5%; /* allow expansion */
         padding-right: 5%; /* allow expansion */
         border-radius: 15px; /* more fun-looking */
       }
       .container {
-        padding: 20px;
+        padding-top: 10px;
+        padding-bottom: 20px;
+        padding-left: 15px;
+        padding-right: 15px;
         border: 2px solid var(--border); /* more pop */
         border-radius: 15px; /* more fun-looking */
         background-color: var(--container);
@@ -51,17 +76,30 @@
       input,
       textarea,
       span,
-      div[id="wait"] {
+      div[id="wait"],
+      div[id="user"] {
         font-family: monospace; /* preserve monospace fonts, so that users easily distinguish input fields from non-input fields */
         color: var(--text);
         font-style: normal;
       }
+
+      textarea:focus {
+        outline: 2px solid var(--border-textarea);
+        outline-offset: 2px;
+      }
       label {
         font-style: italic;
+      }
+      header > label > span,
+      div[id="dry"] > label > span,
+      .collapsible-header > span {
+        font-family: unset;
       }
       .extra {
         padding-left: 17px;
         color: var(--reference);
+        font-style: italic;
+        font-family: unset;
       }
       .days {
         padding-left: 13px;
@@ -89,51 +127,100 @@
       input[type="number"]::-webkit-inner-spin-button {
         scale: 1.5; /* display larger arrows */
       }
+      .collapsible-header {
+        position: relative;
+      }
       .collapsible-header, .collapsible-body {
         border-bottom: none;
       }
       .collapsible-header::after {
-        content: "\25BC"; /* larger, unicode down arrow */
+        font-family: "Noto Sans Symbols 2", sans-serif !important;
+        font-size: 0.9em;
+        content: "\1F783"; /* unicode down arrow matches dropdown arrow */
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-25%);
       }
       .active .collapsible-header::after {
-        content: "\25B2"; /* larger, unicode up arrow */
+        content: "\1F781"; /* unicode up arrow in same style as up arrow */
       }
+      .collapsible-header > span {
+        width: 100%;
+      }
+      [type=checkbox]+span:not(.lever) {
+        line-height: 21px; /* override Materialize CSS */
+      }
+      header > label > span {
+        font-size: large !important; /* override Materialize CSS */
+        line-height: 18px !important; /* override Materialize CSS */
+      }
+      input {
+        padding-top: unset !important; /* override Materialize CSS */
+        height: 28px !important; /* override Materialize CSS */
+      }
+      textarea.materialize-textarea {
+        padding-top: 4px !important; /* override Materialize CSS */
+        resize: vertical !important; /* override Materialize CSS */
+      }
+      span[id="dryRunText"] {
+        line-height: 20px !important; /* override Materialize CSS */
+      }
+      .active .collapsible-body {
+        max-height: 1000px !important; /* override Materialize CSS */
+      }
+      h1 {
+          display: inline;
+      }
+      h1[id="sansFixed"], .mid, .collapsible-header::after, .active .collapsible-header::after { 
+          font-family: system-ui;
+      }
+      h1[id="serifFixed"], header > label > span {
+          font-family: "Noto Sans SC", sans-serif;
+      }      
     </style>
   </head>
   <body onload="load()">
     <header>
-      <h1>Add 加油 ("jiā yóu") Events</h1>
+      <h1 id="sansFixed">Add</h1><h1 id="serifFixed"> 加油 </h1><h1 id="sansFixed">Events</h1>
+      <br><br>
       <div id="user">&nbsp;</div>
-    </header>
+      <br>
+      <label>
+        <input type="checkbox" class="filled-in" id="chinese" name="chinese" />
+        <span>中文</span>
+      </label>
+</header>
 
-    <br />
+    <!-- <br /> -->
 
     <main>
       <form id="calendarForm">
         <section class="section">
           <div class="container">
             <!-- <div id="search"> -->
-            <div id="section">Search Parameters</div>
+            <div id="section" name="searchSection">Search Parameters</div>
             <!-- <br /> -->
 
-            <h5>Calendar</h5>
+            <h5 id="calendarHeader">Calendar</h5>
             <div class="input-field">
               <select id="calendarName">
-                <option value="" disabled selected>Searching...</option>
+                <!-- <option value="" disabled selected>Searching... (搜索中)</option> populate later in DOMContentLoaded event listener --> 
               </select>
-              <label for="calendarName">Must already exist</label>
+              <!-- <label for="calendarName">Must already exist</label> -->
+              <span name="calendarName" class="extra">Must already exist</span>
             </div>
             <br/>
 
-            <label for="calendarNameRef"></label>
-            <text id="calendarNameRef" name="calendarNameRef"></text>
+            <!-- <label for="calendarNameRef"></label> -->
+            <text id="calendarNameRef" name="calendarNameRef"></text> <!-- hidden -->
             <!-- <text>Calendar must already exist</text> -->
             <!-- <br /><br /> -->
             
-            <label for="howMany"></label>
-            <text id="howMany" name="howMany"></text>
+            <!-- <label for="howMany"></label> -->
+            <text id="howMany" name="howMany"></text> <!-- hidden -->
 
-            <h5>Letter Days</h5>
+            <h5 id="letterDayHeader">Letter Days</h5>
             <!-- <label for="days">On which to add events</label> -->
             <div id="table" class="days">
               <div id="row">
@@ -180,7 +267,7 @@
             <!-- prefilled for clarity -->
             <br/>
 
-            <h5>Frequency</h5>
+            <h5 id="frequencyHeader">Frequency</h5>
             <div class="input-field">
               <input
                 id="frequency"
@@ -190,15 +277,17 @@
                 min="1"
                 max="3"
                 step="1"
+                placeholder="Optional"
               />
-              <label for="numberInput">Every one, two or three letter days</label>
+              <!-- <label for="numberInput">Every one, two or three letter days</label> -->
+              <span name="numberInput" class="extra">Every one, two or three letter days</span>
             </div>
           </div>
         </section>
         <section class="section">
           <div class="container">
             <!-- <div id="settings"> -->
-            <div id="section">Event Settings</div>
+            <div id="section" name="eventSection">Event Settings</div>
             <!-- <br /> -->
 
             <!-- <label for="calendarNameAlt">Alternate calendar name:</label> -->
@@ -213,36 +302,38 @@
             <!-- ><br /> -->
             <!-- <br /> -->
 
-            <h5>Title</h5>
+            <h5 id="titleHeader">Title</h5>
             <div class="input-field">
               <input id="title" type="text" class="validate" value="New Meeting" required />
-              <label for="title">of events</label>
+              <!-- <label for="title">of events</label> -->
+              <!-- <span name="title" class="extra">of events</span> -->
             </div>
             <!-- prefilled for convenience -->
             <br>
 
-            <h5>Time</h5>
+            <h5 id="timeHeader">Time</h5>
             <!-- <label for="times">HH:MM AM/PM, HH:MM (24-hour)</label> -->
             <div id="table">
               <div id="row">
                 <div id="cell">
                   <div class="input-field">
                     <input id="startTime" type="text" class="validate" placeholder="Optional" value="10:00 AM" />
-                    <label for="startTime">Start</label>
+                    <!-- <label for="startTime">Start</label> -->
                   </div>
                 </div>
                 <div id="cell" class="mid">
-                  &emsp;-&emsp;
+                  &emsp;&ndash;&emsp;
                 </div>
                 <div id="cell">
                   <div class="input-field">
                     <input id="endTime" type="text" class="validate" placeholder="Optional" value="11:00 AM" />
-                    <label for="endTime">End</label>
+                    <!-- <label for="endTime">End</label> -->
                   </div>                   
                 </div>
               </div>
             </div>
-            <label for="times" class="extra">HH:MM AM/PM, HH:MM (24-hour)</label>
+            <!-- <label for="times" class="extra">HH:MM AM/PM, HH:MM (24-hour)</label> -->
+            <span name="times" class="extra">HH:MM AM/PM, HH:MM (24-hour)</span>
             <!-- prefilled for clarity -->
             <br/><br><br>
             <!-- </div> -->
@@ -251,59 +342,69 @@
             <ul class="collapsible">
               <li>
                 <div class="collapsible-header">
-                  Guests,&nbsp;Location,&nbsp;Description,&nbsp;Date
+                  <span name="collapsible-header">Guests,&nbsp;Location,&nbsp;Description,&nbsp;Date</span>
                 </div>
                 <div class="collapsible-body">
 
-                  <h5>Guests</h5>
+                  <h5 id="guestsHeader">Guests</h5>
                   <div class="input-field">
                     <textarea id="guests" class="materialize-textarea" placeholder="Optional"></textarea>
-                    <label for="guests">List email addresses, comma-separated</label>
+                    <!-- <label for="guests">List email addresses, comma-separated</label> -->
+                    <span name="guests" class="extra">List email addresses, comma-separated</span>
                   </div>
                   <!-- send invitation emails manually -->
                   <br>
       
-                  <h5>Location</h5>
+                  <h5 id="locationHeader">Location</h5>
                   <div class="input-field">
                     <input id="location" type="text" class="validate" placeholder="Optional" />
-                    <label for="location">of events</label>
+                    <!-- <label for="location">of events</label> -->
+                    <!-- <span name="location" class="extra">of events</span> -->
                   </div>
                   <br>
       
-                  <h5>Description</h5>
+                  <h5 id="descriptionHeader">Description</h5>
                   <div class="input-field">
                     <textarea id="description" class="materialize-textarea" placeholder="Optional"></textarea>
-                    <label for="description">String or full URL</label>
+                    <!-- <label for="description">String or full URL</label> -->
+                    <span name="description" class="extra">String or full URL</span>
                   </div>
                   <!-- If full URL, then text to display will be "Agenda" -->
                   <br>
       
-                  <h5>Date</h5>
+                  <h5 id="dateHeader">Date</h5>
                   <!-- <label for="dates">Mmm DD YYYY, MM/DD/YYYY, YYYY-MM-DD</label> -->
                   <div id="table">
                     <div id="row">
                       <div id="cell">
                         <div class="input-field">
                           <input id="start" type="text" class="validate" placeholder="Optional" />
-                          <label for="start">Start</label>
+                          <!-- <label for="start">Start</label> -->
                           <!-- replacing placeholder="Optional" with the current date is a good idea for convenience -->
                         </div>
                       </div>
                       <div id="cell" class="mid">
-                        &emsp;-&emsp;
+                        &emsp;&ndash;&emsp;
                       </div>
                       <div id="cell">
                         <div class="input-field">
                           <input id="end" type="text" class="validate" placeholder="Optional" />
-                          <label for="end">End</label>                    
+                          <!-- <label for="end">End</label>                     -->
                           <!-- <input type="text" id="end" name="end" placeholder="6/12/2025" /> redundant since internal calendar events end same date -->
                         </div>
                       </div>
                     </div>
                   </div>
-                  <label for="dates" class="extra">Mmm DD YYYY, MM/DD/YYYY, YYYY-MM-DD</label>
+                  <!-- <label for="dates" class="extra">Mmm DD YYYY, MM/DD/YYYY, YYYY-MM-DD</label> -->
+                  <span name="dates" class="extra">Mmm DD YYYY, MM/DD/YYYY, YYYY-MM-DD</span>
                   <!-- Confine date range -->
                   <br><br><br>
+
+                  <!-- <label for="startRef"></label> -->
+                  <text id="startRef" name="startRef"></text> <!-- to prevent date drift -->
+
+                  <!-- <label for="endRef"></label> -->
+                  <text id="endRef" name="endRef"></text> <!-- to prevent date drift -->
       
                 </div>
               </li>
@@ -316,7 +417,7 @@
               <label>
                 <!-- add "hidden" to label tag above to hide dryRun-->
                 <input type="checkbox" class="filled-in" id="dryRun" unchecked/>
-                <span>Dry Run</span>
+                <span id="dryRunText">Dry Run</span>
                 <!-- test script before running it in production, hide for production by commenting or removing these lines of code -->
               </label>
             </div>
@@ -324,7 +425,7 @@
             <br />
 
             <div class="button">
-              <button class="btn filled rounded waves-effect waves-light" type="submit">Submit</button>
+              <button class="btn filled rounded waves-effect waves-light" type="submit" id="button">Submit</button>
             </div>
 
             <br>
@@ -338,32 +439,64 @@
 
     <footer>
       <p>
-        Technical difficulties? Search issues or open a new one on
-        <a href="https://github.com/saegl5/jiayou_add_events/issues">GitHub</a>.
+        <text name="difficulties">Technical difficulties? Search issues or open a new one on
+        <a href="https://github.com/saegl5/jiayou_add_events/issues">GitHub</a>.</text>
         <br>
-        <text class="reference"
-          >Reference ID: f8406163e21d6653a8359abee7cdf17c71a3e539</text
+        <text class="reference" name="reference"
+          >Version </text><text class="reference">2.13.2</text
         >
-        <!-- Latest commit SHA from main branch that includes major updates, minor updates, or bug fixes -->
+        <!-- Latest tag that includes major updates, minor updates, or bug fixes -->
       </p>
     </footer>
   
     <script>
+    
+      function isChineseLanguage() { // place here so DOMContentLoaded event listener and load() can access it
+        const language = navigator.language || navigator.languages[0];
+        return language.startsWith("zh"); // examples: zh-CN and zh-TW
+      }
 
       document.addEventListener("DOMContentLoaded", function () {
-        // const elems = document.querySelectorAll(".collapsible");
-        // M.Collapsible.init(elems);
+        // const selectElems = document.querySelectorAll('select');
+        // M.FormSelect.init(selectElems);
+
+        const selectElement = document.getElementById("calendarName");         
+        var optionText;
+        if (isChineseLanguage() === true)
+          optionText = "搜索中……";
+        else
+          optionText = "Searching...";
+        const newOption = new Option(optionText, "", true, true);
+        // syntax: new Option(text, value, defaultSelected, selected)
+        newOption.disabled = true; // Ensure the option is disabled
+        selectElement.appendChild(newOption);
+        
+        // const collapsibleElems = document.querySelectorAll(".collapsible");
+        // M.Collapsible.init(collapsibleElems);
+                        
+        if (isChineseLanguage() === true) { // makes more sense to place here
+          document.getElementById("chinese").checked = true;
+          callTranslate("Chinese"); // translate text to Chinese, if endDate is not null then tail back above
+        }
+        
         M.AutoInit();
         load();
       });
 
       // JavaScript handles form submission and sends data to the Google Apps Script
+      
+      // make var to carry over value
+      var username;
+      
       function load() {
         // optimized by merging into one script
         google.script.run
           .withSuccessHandler(function (response) {
-            document.getElementById("user").innerHTML =
-              "Welcome, " + response.username + "!";
+            if (document.getElementById("chinese").checked === true) 
+              document.getElementById("user").innerHTML = "欢迎，" + response.username;
+            else
+              document.getElementById("user").innerHTML = "Welcome, " + response.username;
+            username = response.username; // backup
             const selectElement = document.querySelector('select');
             selectElement.innerHTML = ''; // Clear existing options
             for (const calendar of response.calendars) {
@@ -384,20 +517,31 @@
               // see also https://stackoverflow.com/questions/45379356/whats-the-difference-between-selected-and-defaultselected-when-constructing
             }
             document.getElementById("calendarNameRef").value = response.reference;
+            if (response.reference === "" && document.getElementById("chinese").checked === false)
+              document.getElementById("wait").innerHTML = "No calendars contain letter days!";
+            else if (response.reference === "" && document.getElementById("chinese").checked === true)
+              document.getElementById("wait").innerHTML = "没有日历包含字母日！";
             document.getElementById("howMany").value = response.conflict;
-            if (response.conflict > 1) {
+            if (response.conflict > 1 && document.getElementById("chinese").checked === false)
               document.getElementById("wait").innerHTML = "Multiple calendars contain letter days!";
-            }
+            else if (response.conflict > 1 && document.getElementById("chinese").checked === true)
+              document.getElementById("wait").innerHTML = "多个日历包含字母日！";
+            // check down below
             M.FormSelect.init(selectElement);
             if (response.endDate !== null) {
               document.getElementById("end").value = response.endDate;
+              document.getElementById("endRef").value = document.getElementById("end").value; // backup
+              if (isChineseLanguage() === true) { // tail back
+                // document.getElementById("endRef").value = document.getElementById("end").value; // backup here, in case end date is changed
+                document.getElementById("end").value = new Date(document.getElementById("endRef").value).toISOString().split("T")[0]; // keeps just date
+              }
             }
           })
           .getCalendarNamesAndDefault();
       }
 
-      document.getElementById("start").value = new Date()
-        .toLocaleDateString("en-US", {
+      function localeDateString(dateString) {
+        return new Date(dateString).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
           year: "numeric",
@@ -405,13 +549,334 @@
         .replace(/,/g, ""); // removes comma
       // Examples: Jan 4 2024, Mar 14 2025
       // Format is consistent with default date format in Create 加油 ("jiā yóu") Calendar web app
+      }
+
+      document.getElementById("start").value = localeDateString(Date.now());
+      document.getElementById("startRef").value = document.getElementById("start").value; // backup
+
+      // Convert Local to ISO
+      function parseTimeLocal(time) {
+        let [timePart, modifier] = time.split(" "); // modifier ignored if missing
+        time = timePart.split(":");
+
+        // Split strings into lists of hours and minutes
+        time[0] = parseInt(time[0]);
+        time[1] = parseInt(time[1]);
+
+        if (modifier === "AM" && time[0] === 12) time[0] = time[0] - 12;
+        else if (modifier === "PM" && time[0] !== 12) time[0] = time[0] + 12;
+
+        // add leading zero
+        if (time[1] < 10) time[1] = "0" + time[1];
+
+        // exclude modifier
+
+        return time;
+      }
+
+      // Convert ISO to Local
+      function parseTimeISO(time) {
+        time = time.split(":");
+        time[0] = parseInt(time[0]);
+        time[1] = parseInt(time[1]);
+        
+        let modifier = undefined;
+
+        if (time[0] === 0) {
+          time[0] = 12;
+          modifier = "AM";
+        }
+        else if (time[0] < 12) modifier = "AM";
+        else if (time[0] === 12) modifier = "PM";
+        else {
+          time[0] = time[0] - 12;
+          modifier = "PM";
+        }
+
+        // add leading zero
+        if (time[1] < 10) time[1] = "0" + time[1];
+
+        // append modifier
+        time[1] = time[1] + " " + modifier;
+
+        return time;
+      }
+
+      function validateTimeInput(event) {
+        let inputValue = event.target.value;
+        let hour = inputValue.split(":")[0]; // Extract hour part
+        hour = parseInt(hour);
+        let modifier = inputValue.split(" ")[1]; // Extract AM/PM part, if exists
+        // let minute = inputValue.split(":")[1]?.split(" ")[0]; // Extract minute part
+        // minute = parseInt(minute);
+
+        // Ignoring negative numbers, minimum hour, cross formatting, hourly roll over, minimum and maximum minute, since maximum hour restriction is most important 
+
+        // 12-hour format -----------
+        // if (modifier !== undefined && hour === 0) { // Minimum hour is 12
+        //   event.target.value = event.target.value.replace(hour, 12); // Replace prohibited text
+        //   event.target.value = event.target.value.replace(modifier, "AM"); // Reset modifier
+        // } 
+        // if (modifier !== undefined && hour >= 24) { // Cap hour at 11 (PM), since 12 (AM) and later is next day
+        //   event.target.value = event.target.value.replace(hour, 11); // Replace prohibited text
+        //   event.target.value = event.target.value.replace(modifier, "PM"); // Reset modifier
+        // } 
+        // else if (modifier !== undefined && hour > 12) { // Otherwise, since maximum hour is also 12, roll over hour
+        //   event.target.value = event.target.value.replace(hour, hour % 12); // Replace prohibited text
+        //   event.target.value = event.target.value.replace(modifier, "PM"); // Reset modifier, although 12 ideally would change modifier
+        // }
+
+        // 24-hour format -----------
+        if (modifier === undefined && hour >= 24) // Cap hour at 23, since 24 and greater is next day
+          event.target.value = event.target.value.replace(hour, 23); // Replace prohibited text
+
+        // 12-hour and 24-hour format -----------
+        // if (minute >= 60) // Cap minute at 59, since 60 and greater is next hour
+        //   event.target.value = event.target.value.replace(minute, 59); // Replace prohibited text
+      }
+
+      // Attach the reusable function to both startTime and endTime inputs
+      document.getElementById("startTime").addEventListener("input", validateTimeInput);
+      document.getElementById("endTime").addEventListener("input", validateTimeInput);
+
+      function callTranslate(language) {
+        let response = translate(language);
+        document.body.style.fontFamily = response.fontFamily;
+        button.style.fontFamily = response.fontFamily; // button font
+        if ((document.getElementById("calendarName").options[0].text).includes("搜索中") || (document.getElementById("calendarName").options[0].text).includes("Searching"))
+          document.getElementById("calendarName").options[0].text = response.option; // update dropdown list
+          M.AutoInit(); // reinitialize dropdown list
+        if (username !== undefined)
+          document.getElementById("user").innerHTML = response.user;
+        document.getElementById("calendarHeader").innerHTML = response.calendarHeader;
+        document.getElementById("letterDayHeader").innerHTML = response.letterDayHeader;
+        document.getElementById("frequencyHeader").innerHTML = response.frequencyHeader;
+        document.getElementById("titleHeader").innerHTML = response.titleHeader;
+        document.getElementById("timeHeader").innerHTML = response.timeHeader;
+        document.getElementsByName("collapsible-header")[0].innerHTML = response.collapsibleHeader;
+        document.getElementById("guestsHeader").innerHTML = response.guestsHeader;
+        document.getElementById("locationHeader").innerHTML = response.locationHeader;
+        document.getElementById("descriptionHeader").innerHTML = response.descriptionHeader;
+        document.getElementById("dateHeader").innerHTML = response.dateHeader;
+        document.getElementsByName("searchSection")[0].innerHTML = response.searchSection;
+        document.getElementsByName("eventSection")[0].innerHTML = response.eventSection;
+        document.getElementsByName("calendarName")[0].innerHTML = response.calendarName;
+        document.getElementsByName("numberInput")[0].innerHTML = response.numberInput;
+        document.getElementsByName("times")[0].innerHTML = response.times;
+        document.getElementsByName("guests")[0].innerHTML = response.guestsName;
+        document.getElementsByName("description")[0].innerHTML = response.descriptionName;
+        if (document.getElementById("title").value === "New Meeting" || document.getElementById("title").value === "新会议")
+          document.getElementById("title").value = response.title; // quirky in vscode preview
+        if (document.getElementById("startTime").value !== "") // fixes NaN
+          document.getElementById("startTime").value = response.startTime;
+        document.getElementById("startTime").placeholder = response.startTimeOpt;
+        if (document.getElementById("endTime").value !== "") // fixes NaN
+          document.getElementById("endTime").value = response.endTime;
+        document.getElementById("endTime").placeholder = response.endTimeOpt;
+        document.getElementById("guests").placeholder = response.guestsId;
+        document.getElementById("location").placeholder = response.location;
+        document.getElementById("description").placeholder = response.descriptionId;
+        document.getElementById("start").placeholder = response.startOpt;
+        document.getElementById("end").placeholder = response.endOpt;
+        if (document.getElementById("start").value !== "") // fixes Invalid Date
+          document.getElementById("start").value = response.start; // keeps just date
+        document.getElementById("button").innerHTML = response.button;
+        document.getElementsByName("difficulties")[0].innerHTML = response.difficulties;
+        document.getElementsByName("reference")[0].innerHTML = response.reference;
+        if (document.getElementById("end").value !== "") // fixes Invalid Date
+          document.getElementById("end").value = response.end; // keeps just date
+        document.getElementById("dryRunText").innerHTML = response.dryRun;
+        if (document.getElementById("wait").innerHTML !== "&nbsp;")
+          document.getElementById("wait").innerHTML = response.wait; // update message
+      }
+      
+      // Function to translate text
+      function translate(language) {
+        const waitText = document.getElementById("wait").innerHTML;
+        if (language === "Chinese") {
+          const waitMessages = {
+            "No calendars contain letter days!": "没有日历包含字母日！",
+            "Multiple calendars contain letter days!": "多个日历包含字母日！",
+            "Again, no calendars contain letter days!": "再次，没有日历包含字母日！",
+            "Again, multiple calendars contain letter days!": "再次，多个日历包含字母日！",
+            "Please wait...": "请稍等……",
+            "Select a letter day!": "选择一个字母日！",
+            "Cannot locate JIA YOU calendar!": "无法找到加油日历！",
+            "Remove comma from start date!": "从开始日期中删除逗号！",
+            "Remove comma from end date!": "从结束日期中删除逗号！",
+            "Start time is missing colon!": "开始时间缺少冒号！",
+            "Start time is missing AM/PM!": "开始时间缺少AM/PM！",
+            "Add finger space between start time and AM/PM!": "在时间和AM/PM之间添加手指空间！",
+            "End time is missing colon!": "结束时间缺少冒号！",
+            "End time is missing AM/PM!": "结束时间缺少AM/PM！",
+            "Add finger space between end time and AM/PM!": "在时间和AM/PM之间添加手指空间！",
+            "Event start time must be before event end time": "事件开始时间必须在事件结束时间之前",
+            "Events created! Go to your Google Calendar...": "事件已创建！转到您的Google日历……"
+           };       
+          return {
+            fontFamily: '"Noto Sans SC", sans-serif', // font is accessible in macOS Safari, Windows Microsoft Edge, iOS Safari and (presumably) Android Google Chrome
+            option: "搜索中……",
+            user: "欢迎，" + username,
+            calendarHeader: "日历",
+            letterDayHeader: "字母日",
+            frequencyHeader: "频率",
+            titleHeader: "标题",
+            timeHeader: "时间",
+            collapsibleHeader: "客人,&nbsp;位置,&nbsp;描述,&nbsp;日期",
+            guestsHeader: "客人",
+            locationHeader: "位置",
+            descriptionHeader: "描述",
+            dateHeader: "日期",
+            searchSection: "搜索参数",
+            eventSection: "事件设置",
+            calendarName: "必须已存在",
+            numberInput: "每一、两或三个字母日",
+            times: "HH:MM AM/PM, HH:MM (24小时)",
+            guestsName: "客人的电子邮件地址列表，以逗号分隔",          
+            descriptionName: "字符串或完整URL",
+            title: "新会议", // quirky in vscode preview
+            startTime: parseTimeLocal(document.getElementById("startTime").value).join(":"),
+            startTimeOpt: "可选的",
+            endTime: parseTimeLocal(document.getElementById("endTime").value).join(":"),
+            endTimeOpt: "可选的",
+            guestsId: "可选的",
+            location: "可选的",
+            descriptionId: "可选的",
+            startOpt: "可选的",
+            endOpt: "可选的",
+            start: document.getElementById("startRef").value
+              ? new Date(document.getElementById("startRef").value).toISOString().split("T")[0] // keeps just date
+              : "", // skip
+            button: "提交",
+            difficulties: "技术问题？在" + `<a href="https://github.com/saegl5/jiayou_add_events/issues">GitHub</a>` + "上搜索问题或打开一个新问题。",
+            reference: "版本 ",
+            end: document.getElementById("endRef").value
+              ? new Date(document.getElementById("endRef").value).toISOString().split("T")[0] // keeps just date
+              : "", // skip
+            dryRun: "干运行",
+            wait: waitMessages[waitText]
+              ?? (waitText.includes("No ") || waitText.includes(" events exist!")
+              ? waitText.replace("No ", "没有").replace(" events exist!", "事件存在！")
+              :"")
+          }
+        } else if (language === "English") { // default
+          const waitMessages = {
+            "没有日历包含字母日！": "No calendars contain letter days!",
+            "多个日历包含字母日！": "Multiple calendars contain letter days!",
+            "再次，没有日历包含字母日！": "Again, no calendars contain letter days!",
+            "再次，多个日历包含字母日！": "Again, multiple calendars contain letter days!",
+            "请稍等……": "Please wait...",
+            "选择一个字母日！": "Select a letter day!",
+            "无法找到加油日历！": "Cannot locate JIA YOU calendar!",
+            "从开始日期中删除逗号！": "Remove comma from start date!",
+            "从结束日期中删除逗号！": "Remove comma from end date!",
+            "开始时间缺少冒号！": "Start time is missing colon!",
+            "开始时间缺少AM/PM！": "Start time is missing AM/PM!",
+            "在时间和AM/PM之间添加手指空间！": "Add finger space between start time and AM/PM!",
+            "结束时间缺少冒号！": "End time is missing colon!",
+            "结束时间缺少AM/PM！": "End time is missing AM/PM!",
+            "在时间和AM/PM之间添加手指空间！": "Add finger space between end time and AM/PM!",
+            "事件开始时间必须在事件结束时间之前": "Event start time must be before event end time",
+            "事件已创建！转到您的Google日历……": "Events created! Go to your Google Calendar..."
+          };
+          return {
+            fontFamily: 'system-ui',
+            option: "Searching...",
+            user: "Welcome, " + username,
+            calendarHeader: "Calendar",
+            letterDayHeader: "Letter Days",
+            frequencyHeader: "Frequency",
+            titleHeader: "Title",
+            timeHeader: "Time",
+            collapsibleHeader: "Guests,&nbsp;Location,&nbsp;Description,&nbsp;Date",
+            guestsHeader: "Guests",
+            locationHeader: "Location",
+            descriptionHeader: "Description",
+            dateHeader: "Date",
+            searchSection: "Search Parameters",
+            eventSection: "Event Settings",
+            calendarName: "Must already exist",
+            numberInput: "Every one, two or three letter days",
+            times: "HH:MM AM/PM, HH:MM (24-hour)",
+            guestsName: "List email addresses, comma-separated",
+            descriptionName: "String or full URL",
+            title: "New Meeting", // quirky in vscode preview
+            startTime: parseTimeISO(document.getElementById("startTime").value).join(":"),
+            startTimeOpt: "Optional",
+            endTime: parseTimeISO(document.getElementById("endTime").value).join(":"),
+            endTimeOpt: "Optional",
+            guestsId: "Optional",
+            location: "Optional",
+            descriptionId: "Optional",
+            startOpt: "Optional",
+            endOpt: "Optional",
+            start: localeDateString(document.getElementById("startRef").value),
+            button: "Submit",
+            difficulties: "Technical difficulties? Search issues or open a new one on " + `<a href="https://github.com/saegl5/jiayou_add_events/issues">GitHub</a>` + ".",
+            reference: "Version ",
+            end: localeDateString(document.getElementById("endRef").value),
+            dryRun: "Dry Run",
+            wait: waitMessages[waitText]
+              ?? (waitText.includes("没有") || waitText.includes("事件存在！")
+              ? waitText.replace("没有", "No ").replace("事件存在！", " events exist!")  
+              :"")
+          }
+        }
+      }
+
+      document
+        .getElementById("chinese")
+        .addEventListener("change", function () { 
+          if (this.checked) callTranslate("Chinese");
+          else callTranslate("English");
+        }); 
 
       document
         .getElementById("calendarName")
         .addEventListener("change", function () { 
           if (this.value === document.getElementById("calendarNameRef").value)
             alert("\"" + this.value + "\" is an internal calendar!\n\nPlease kindly choose a different calendar to add events.");
-      }); 
+        }); 
+      
+      document
+        .getElementById("start")
+        .addEventListener("change", function () { // backup
+          const regex = /^\d{4}-(\d{2})-(\d{2})$/; // regular expression for identifying a ISO-formatted date (YYYY-MM-DD)
+          if (regex.test(this.value) === true) // adjust reference date
+            document.getElementById("startRef").value 
+              = this.value.split("-")[1] + "/" +
+                this.value.split("-")[2] + "/" +
+                this.value.split("-")[0];
+          else
+            document.getElementById("startRef").value = this.value;
+        });
+      
+      document
+        .getElementById("end")
+        .addEventListener("change", function () { // backup
+          const regex = /^\d{4}-(\d{2})-(\d{2})$/; // regular expression for identifying a ISO-formatted date (YYYY-MM-DD)
+          if (regex.test(this.value) === true) // adjust reference date
+            document.getElementById("endRef").value 
+              = this.value.split("-")[1] + "/" +
+                this.value.split("-")[2] + "/" +
+                this.value.split("-")[0];
+          else
+            document.getElementById("endRef").value = this.value;
+        });
+
+      function addLeadingZero(time) {
+        let hour = time.split(":")[0]; // Extract hour part
+        hour = parseInt(hour);
+        let modifier = time.split(" ")[1]; // Extract AM/PM part, if exists
+        let minute = time.split(" ")[0].split(":")[1]; // Extract minute part
+        minute = parseInt(minute);
+        if (minute < 10) {
+          minute = "0" + minute; // add leading zero
+          if (modifier !== undefined) time = hour + ":" + minute + " " + modifier; // update input
+          else time = hour + ":" + minute; // update input
+        }
+        return time; // return updated time
+      }
 
       document
         .getElementById("calendarForm")
@@ -435,14 +900,26 @@
           var start = document.getElementById("start").value;
           var end = document.getElementById("end").value;
           var startTime = document.getElementById("startTime").value;
+          document.getElementById("startTime").value = addLeadingZero(startTime); // Add leading zero to minute, if missing
           var endTime = document.getElementById("endTime").value;
-          var dryRun = document.getElementById("dryRun").checked; // by default, checkbox is unchecked, meaning .checked is false
+          document.getElementById("endTime").value = addLeadingZero(endTime); // Add leading zero to minute, if missing
 
-          document.getElementById("wait").innerHTML = "Please wait...";
+          var dryRun = document.getElementById("dryRun").checked; // by default, checkbox is unchecked, meaning .checked is false
+          
+          if (document.getElementById("chinese").checked === true)
+          // var chinese = document.getElementById("chinese").checked;
+          // if (chinese === true)
+            document.getElementById("wait").innerHTML = "请稍等……";
+          else
+            document.getElementById("wait").innerHTML = "Please wait...";
 
           google.script.run
             .withSuccessHandler(function (response) {
               document.getElementById("wait").innerHTML = response; // Displays a success message when completed
+              if (document.getElementById("chinese").checked === true)
+                callTranslate("Chinese");
+              // else
+                // callTranslate("English");
             })
             .addEvents(
               calendarName,
@@ -458,7 +935,8 @@
               end,
               startTime,
               endTime,
-              dryRun
+              dryRun,
+              // chinese
             );
         }); // calendarNameAlt is now calendarName, and previous calendarName has been hard-coded
     </script>

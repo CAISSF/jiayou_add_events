@@ -4,7 +4,7 @@
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile("Index").setTitle(
-    'Add 加油 ("jiā yóu") Events'
+    'Add 加油 Events'
   );
 }
 
@@ -18,6 +18,8 @@ function getCalendarNamesAndDefault() {
   }
   let defaultCalendarName = CalendarApp.getDefaultCalendar().getName();
   var calendarRef;
+  var calendarNameRef = "";
+  let query = ["J Day", "I Day", "A Day", "Y Day", "O Day", "U Day"]; // example
   var endDate;
 
   // Relay but hide reference calendar
@@ -31,7 +33,6 @@ function getCalendarNamesAndDefault() {
       var eventFind = allCalendars[i].getEvents(now, oneYearFromNow);
       for (var j = 0; j < eventFind.length; j++) {
         var event = eventFind[j];
-        let query = ["J Day", "I Day", "A Day", "Y Day", "O Day", "U Day"]; // example
         if (query.includes(event.getTitle())) {
           calendarRef = CalendarApp.getCalendarById(allCalendars[i].getId()); // calendar is still hard-coded, but this way the ID is hidden 
           calendarNameRef = String(allCalendars[i].getName());
@@ -40,34 +41,41 @@ function getCalendarNamesAndDefault() {
           howMany += 1;
           break;
         }
-        else {
-          calendarNameRef = "";
-        }
+        // else {
+        //   calendarNameRef = ""; <-- don't do this! if found = true and howMany = 1 and loop runs again, then calendarNameRef = "" again
+        // }
       }
     }
   }
 
-  // Search for the last event date
-  var now = new Date();
-  var oneYearFromNow = new Date();
-  oneYearFromNow.setFullYear(now.getFullYear() + 1); // sooner, if calendar cuts off
-  // Search for all events between now and one year from now
-  search(now, oneYearFromNow);
-  function search(from, to) {
-    if (from > to) {
-      endDate = null;
-    } else {
-      var eventsAll = calendarRef.getEvents(from, to);
-      endDate = eventsAll[eventsAll.length-1].getAllDayStartDate().toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })
-        .replace(/,/g, ""); // removes comma
-      // Examples: Jan 4 2024, Mar 14 2025
-      // Format is consistent with default date format in Create 加油 ("jiā yóu") Calendar web app
+  // Search for the last event date, if calendarNameRef exists
+  if (calendarNameRef !== "") {
+    var now = new Date();
+    var oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(now.getFullYear() + 1); // sooner, if calendar cuts off
+    // Search for all events between now and one year from now
+    search(now, oneYearFromNow);
+    function search(from, to) {
+      if (from > to) {
+        endDate = null;
+      } else {
+        var eventsAll = calendarRef.getEvents(from, to);
+        for (var i = eventsAll.length-1; i >= 0; i--) {
+          if (query.includes(eventsAll[i].getTitle())) {
+            endDate = eventsAll[i].getStartTime().toLocaleDateString("en-US", { // else all-day recurring events may be misidentified as non-all-day events, now that checking query we could reuse getAllDayStartDate() again
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+              .replace(/,/g, ""); // removes comma
+            // Examples: Jan 4 2024, Mar 14 2025
+            // Format is consistent with default date format in Create 加油 ("jiā yóu") Calendar web app
+            break;
+          }
+        }
+      }
+      return null;
     }
-    return null;
   }
 
   return {
@@ -94,7 +102,8 @@ function addEvents(
   end,
   startTime,
   endTime,
-  dryRun
+  dryRun,
+  // chinese
 ) {
   var calendars = CalendarApp.getAllCalendars(); // Get all calendars
   var calendarId = ""; // Initially null
@@ -117,14 +126,18 @@ function addEvents(
     }
   }
 
-  // check if reference calendar doesn't exist
+  // check frequency
+  if (frequency === "")
+    frequency = 1; // default
+
+  // recheck if reference calendar doesn't exist
   if (calendarIdRef === "") {
-    return "JIA YOU calendar does not exist!"; // handle error
+    return "Again, no calendars contain letter days!"; // handle error differently, since sometimes calendar exists but backend service may be down
   }
 
-  // check for multiple (i.e., conflicting) reference calendars
+  // recheck for multiple (i.e., conflicting) reference calendars
   if (howMany > 1) {
-    return "Multiple calendars contain letter days!"; // handle error
+    return "Again, multiple calendars contain letter days!"; // handle error
   }
 
   // Access the user calendar and reference calendar
@@ -132,25 +145,58 @@ function addEvents(
   var calendarRef = CalendarApp.getCalendarById(calendarIdRef); // again, calendar is still hard-coded, but this way the ID is hidden
 
   // handle additional exceptions
-  if (start.includes(",") || end.includes(",")) {
-    return "Use accepted date formats!"; // for consistency
+  if (start.includes(",")) {
+    return "Remove comma from start date!"; // for consistency
+  }
+  if (end.includes(",")) {
+    return "Remove comma from end date!"; // for consistency
   }
   if (
-    startTime !== "" &&
-    (startTime.includes("am") ||
-      startTime.includes("pm") ||
-      !startTime.includes(":") ||
-      !startTime.includes(" "))
+    startTime !== "" && // chinese === true &&
+    !startTime.includes(":")    
   )
-    return "Use accepted time formats!"; // for consistency
+    return "Start time is missing colon!"; // for consistency, any format
+  if (
+    startTime !== "" &&
+    startTime.includes(" ") &&
+    (!startTime.includes("AM") &&
+      !startTime.includes("am") && // relaxed requirement
+      !startTime.includes("PM") &&
+      !startTime.includes("pm")) // relaxed requirement
+  )
+    return "Start time is missing AM/PM!"; // for consistency, 12-hour time format
+  if (
+    startTime !== "" && // chinese === false &&
+    (startTime.includes("AM") ||
+      startTime.includes("am") || // relaxed requirement
+      startTime.includes("PM") ||
+      startTime.includes("pm")) && // relaxed requirement
+    !startTime.includes(" ")
+  ) 
+    return "Add finger space between start time and AM/PM!"; // for consistency, 12-hour time format
+  if (
+    endTime !== "" && // chinese === true &&
+    !endTime.includes(":")    
+  )
+    return "End time is missing colon!"; // for consistency, any format
   if (
     endTime !== "" &&
-    (endTime.includes("am") ||
-      endTime.includes("pm") ||
-      !endTime.includes(":") ||
-      !endTime.includes(" "))
+    endTime.includes(" ") &&
+    (!endTime.includes("AM") &&
+      !endTime.includes("am") && // relaxed requirement
+      !endTime.includes("PM") &&
+      !endTime.includes("pm")) // relaxed requirement
   )
-    return "Use accepted time formats!"; // for consistency
+    return "End time is missing AM/PM!"; // for consistency, 12-hour time format
+  if (
+    endTime !== "" && // chinese === false &&
+    (endTime.includes("AM") ||
+      endTime.includes("am") || // relaxed requirement
+      endTime.includes("PM") ||
+      endTime.includes("pm")) && // relaxed requirement
+    !endTime.includes(" ")
+  ) 
+    return "Add finger space between end time and AM/PM!"; // for consistency, 12-hour time format
 
   const regex = /^\d{4}-(\d{2})-(\d{2})$/; // regular expression for identifying a ISO-formatted date (YYYY-MM-DD)
 
@@ -238,7 +284,7 @@ function addEvents(
 
   // Check if query finds no events
   if (events.length === 0) {
-    return 'No "' + query + '" events exist!';
+    return 'No "' + query.join(", ") + '" events exist!';
   }
 
   // Check if times are null
@@ -298,7 +344,8 @@ function addEvents(
   // https://github.com/saegl5/jiayou_add_events/issues/4
 
   // Counter for only events keep
-  var indexKeep = eventSeries.length*(frequency-1); // start very first date at this index
+  // var indexKeep = eventSeries.length*(frequency-1); // start very first date at this index <-- uncomment to skip first instance(s)
+  var indexKeep = 0; // always start very first date at this index <-- comment out to skip first instance(s)
 
   // extract the first date from the dictionary
   var firstDate = []; // may have multiple first dates
@@ -306,7 +353,8 @@ function addEvents(
   var dateEndTime = []; // subsequently, may have multiple dateEndTimes
 
   // not all letter days may be used, but it is still easy to pair up firstDate with the letter
-  var firstDateIndex = eventSeries.length*(frequency-1); // equal to indexKeep but only incremented here
+  // var firstDateIndex = eventSeries.length*(frequency-1); // equal to indexKeep initially but then incremented below <-- uncomment to skip first instance(s)
+  var firstDateIndex = 0; // equal to indexKeep initially but then incremented below <-- comment out to skip first instance(s)
   for (var n = 0; n < eventSeries.length; n++) {
     firstDate[n] = new Date(Object.keys(date)[firstDateIndex]); // need to sort dictionary keys into an array, select one key and cast it as a function 
     dateStartTime[n] = new Date(
@@ -334,17 +382,18 @@ function addEvents(
   // Iterate over the dates with events titled query and create a new event for the series at start time
   for (var datestr in date) { // every dictionary key in date, key is ordered too
     var eventDate = new Date(datestr); // "eventDate" above is isolated in its own loop
-    if (!dryRun) {
-      // Check if description includes a space
-      let includesSpace = description.includes(" "); // otherwise, links will break
-      // Check if description is a link
-      let includesHttp = description.includes("http");
+    // if (!dryRun) { do regardless
+    // Check if description includes a space
+    let includesSpace = description.includes(" "); // otherwise, links will break
+    // Check if description is a link
+    let includesHttp = description.includes("http");
 
-      // Event uses color of calendar to which it is added
+    // Event uses color of calendar to which it is added
 
-      // Create the new event
-      createEvent(frequency, includesSpace, includesHttp); // split up events, all of which have the same event details, into separate series
-    }
+    // Create the new event
+    // Utilities.sleep(1000); // mitigate use limit later
+    createEvent(frequency, includesSpace, includesHttp); // split up events, all of which have the same event details, into separate series
+    // }
 
     // function nested because it relies on many parameters
     function createEvent(frequency, includesSpace, includesHttp) {
@@ -355,50 +404,55 @@ function addEvents(
         if (eventIndex >= eventSeries.length + eventSeries.length*(frequency-1))
           // could also use query.length
           firstEvent = false;
-        if (firstEvent) {
-          var eventOptions = {
-            location: location,
-            description: 
-              includesSpace ? description :
-              includesHttp ? `<a href="${description}" target="_blank" >Agenda</a>` :
-              description,
-            guests: guests,
-          };
 
-          if (startTime === "" && endTime === "") {
-            // make all-day event
-            eventSeries[eventIndex % eventSeries.length] = calendar.createAllDayEventSeries(
-              title,
-              firstDate[eventIndex % eventSeries.length],
-              CalendarApp.newRecurrence().addDate(eventDate),
-              eventOptions
-            );
-          } else {
-            // make regular event
-            eventSeries[eventIndex % eventSeries.length] = calendar.createEventSeries(
-              title,
-              dateStartTime[eventIndex % eventSeries.length],
-              dateEndTime[eventIndex % eventSeries.length],
-              CalendarApp.newRecurrence().addDate(eventDate),
-              eventOptions
-            );
-          }
-          // can't set firstEvent = false yet
-        } // chain subsequent event to first event
-        else {
-          if (startTime === "" && endTime === "") {
-            eventSeries[eventIndex % eventSeries.length].setRecurrence(
-              CalendarApp.newRecurrence().addDate(eventDate),
-              firstDate[eventIndex % eventSeries.length] // date of first event only
-            );
-          } else {
-            eventSeries[eventIndex % eventSeries.length].setRecurrence(
-              CalendarApp.newRecurrence().addDate(eventDate),
-              dateStartTime[eventIndex % eventSeries.length], // date start time of first event only
-              dateEndTime[eventIndex % eventSeries.length] // date end time of first event only
-            );
+        if (!dryRun) {
+          Utilities.sleep(1000); // mitigate use limit now
+          if (firstEvent) {
+            var eventOptions = {
+              location: location,
+              description: 
+                includesSpace ? description :
+                includesHttp ? `<a href="${description}" target="_blank" >Agenda</a>` :
+                description,
+              guests: guests,
+            };
+
+            if (startTime === "" && endTime === "") {
+              // make all-day event
+              eventSeries[eventIndex % eventSeries.length] = calendar.createAllDayEventSeries(
+                title,
+                firstDate[eventIndex % eventSeries.length],
+                CalendarApp.newRecurrence().addDate(eventDate),
+                eventOptions
+              );
+            } else {
+              // make regular event
+              eventSeries[eventIndex % eventSeries.length] = calendar.createEventSeries(
+                title,
+                dateStartTime[eventIndex % eventSeries.length],
+                dateEndTime[eventIndex % eventSeries.length],
+                CalendarApp.newRecurrence().addDate(eventDate),
+                eventOptions
+              );
+            }
+            // can't set firstEvent = false yet
+          } // chain subsequent event to first event
+          else {
+            if (startTime === "" && endTime === "") {
+              eventSeries[eventIndex % eventSeries.length].setRecurrence(
+                CalendarApp.newRecurrence().addDate(eventDate),
+                firstDate[eventIndex % eventSeries.length] // date of first event only
+              );
+            } else {
+              eventSeries[eventIndex % eventSeries.length].setRecurrence(
+                CalendarApp.newRecurrence().addDate(eventDate),
+                dateStartTime[eventIndex % eventSeries.length], // date start time of first event only
+                dateEndTime[eventIndex % eventSeries.length] // date end time of first event only
+              );
+            }
           }
         }
+
       // Log which events were added
         Logger.log('Created "' + title + '" on ' + eventDate + "!");
       }
